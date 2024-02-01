@@ -14,8 +14,8 @@ pipeline{
             steps{
                 script{
                     echo "Pushing docker image"
-                    withCredentials([string(credentialsId:'dockerhub', variable:'dockerhub')]){
-                        sh "docker login -u udaygagguturu --password-stdin ${dockerhub}"
+                    withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhub')]){
+                        sh "echo ${dockerhub} | docker login -u udaygagguturu --password-stdin"
                         sh "docker push udaygagguturu/flask:${env.BUILD_ID}"
                     }
                 }
