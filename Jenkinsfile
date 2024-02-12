@@ -1,10 +1,28 @@
 pipeline{
     agent any
         environment{
-            PROJECT_ID='ancient-booster-410310'
-            LOCATION='us-central1-a'
+            PROJECT_ID='logical-factor-315804'
+            LOCATION='us-west1'
+            CLUSTER_NAME = 'my-gke-cluster'
+            CREDENTIALS_ID = 'gke'
         }
     stages{
+        stage('Terraform Init') {
+            steps {
+                script {
+                    sh "terraform init"
+                }
+            }
+        }
+        stage('Terraform Apply') {
+            steps {
+                script {
+                    sh "terraform refresh "
+                    sh "terraform destroy -auto-approve"
+                    sh "terraform apply -auto-approve"
+                }
+            }
+        }
         stage('Building Docker image'){
             steps{
                 sh "docker build -t udaygagguturu/flask:${env.BUILD_ID} ."
@@ -21,5 +39,12 @@ pipeline{
                 }
             }
         }
+        stage('Deploying to K8s') {
+                    steps{
+                                sh "sed -i 's/tagversion/${env.BUILD_ID}/g' deployment.yaml" 
+                                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'deployment.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
+                            echo "Deployment successfully finished ..."
+                    }
+             }
     }
 }
